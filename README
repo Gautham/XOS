@@ -5,24 +5,10 @@ This is a platform for building a simple operating system upon a simulated machi
 For instructions and detailed documentation, visit
 http://xosnitc.github.com/
 
+Status
+======
+Yet to start
 
-Components
-==========
-APL-Compiler
-SPL-Compiler
-XFS-Interface
-XSM
-
-
-
-Compiling
-=========
-* Use 'make' from the base directory to compile all components
-
-* To compile each component separately, cd into the corresponding directory
-and use 'make' command.
-
-* To recompile each component, within the corresponding directory, first use 'make clean' and then use 'make' command.
 
 Mailing Lists
 =============
