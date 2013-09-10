@@ -1,0 +1,70 @@
+alias physicalSP S0;
+alias filename S1;
+alias i S2;
+alias j S3;
+alias k S4;
+alias l S5;
+
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+filename = [physicalSP - 3];
+
+if ([physicalSP - 1] == 1) then
+	
+	
+	//	Check If File Exists
+	i = 0;
+	while (i < 512 && ([FAT + i] != filename)) do
+		i = i + 8;
+	endwhile;
+	if (i < 512) then					//	File Exists Already
+		[physicalSP - 2] = 0;
+		ireturn;
+	endif;
+
+
+	//	Check For Free Space
+	i = 24;
+	while (i < 448 && [DISK_LIST + i] != 0) do
+		i = i + 1;
+	endwhile;
+	if (i == 448) then					//	No Free Space
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Find Free Entry in FAT
+	alias j S3;
+	j = 0;
+	while (j < 512 && ([FAT + j + 2] != -1)) do
+			j = j + 8;
+	endwhile;
+	if (j == 512) then					// No Free Entry in FAT
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Update FAT Entry
+	[FAT + j] = filename;
+	[FAT + j + 1] = 0;
+	[FAT + j + 2] = i;
+
+
+	//	Create Basic Block
+	load(1, i);
+	j = 0;
+	while (j < 256) do
+		[SCRATCHPAD + j] = -1;
+		j = j + 1;
+	endwhile;
+
+
+	// Store Changes
+	[DISK_LIST + i] = 1;
+	store(5, 19);
+	store(6, 20);
+	store(1, i);
+	[physicalSP - 2] = 0;
+	ireturn;
+endif;
