@@ -1,1 +1,55 @@
+alias PID S0;
+PID = (PTBR - 1024) / 8;
+alias cPCB S1;
+cPCB = READY_LIST + 32 * PID;
+
+[cPCB + 1] = 1;
+[cPCB + 2] = BP;
+[cPCB + 3] = SP - 1;
+
+alias physicalSP S2;
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+
+[cPCB + 4] = [physicalSP];
+[cPCB + 5] = PTBR;
+[cPCB + 6] = PTLR;	
+[cPCB + 7] = R0;	
+[cPCB + 8] = R1;	
+[cPCB + 9] = R2;	
+[cPCB + 10] = R3;	
+[cPCB + 11] = R4;	
+[cPCB + 12] = R5;	
+[cPCB + 13] = R6;	
+[cPCB + 14] = R7;	
+
+alias newPCB S3;
+newPCB = cPCB + 32;
+
+while ((newPCB != cPCB) && ([newPCB + 1] != 1)) do
+	if (newPCB == 2560) then
+		newPCB = READY_LIST;
+	else
+		newPCB = newPCB + 32;
+	endif;
+endwhile;
+
+
+BP = [newPCB + 2];
+SP = [newPCB + 3];
+PTBR = [newPCB + 5];
+PTLR = [newPCB + 6];
+R0 = [newPCB + 7];
+R1 = [newPCB + 8];
+R2 = [newPCB + 9];
+R3 = [newPCB + 10];
+R4 = [newPCB + 11];
+R5 = [newPCB + 12];
+R6 = [newPCB + 13];
+R7 = [newPCB + 14];
+
+SP = SP + 1; 
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512); 
+[physicalSP] = [newPCB + 4];
+[newPCB + 1] = 2;
+
 ireturn;
