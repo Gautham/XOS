@@ -31,7 +31,7 @@ load(27,23);
 PTBR = 1024;
 PTLR = 4;
 
-//Set up Page Table
+//Set up Per App Page Table
 [PTBR] = 25;
 [PTBR + 1] = "01";
 [PTBR + 2] = 26;
@@ -43,7 +43,33 @@ PTLR = 4;
 
 
 [READY_LIST + 1] = 2;
-SP = 3 * 512;
+SP = 1536;
 [28 * 512] = 0;
+
+
+//	Process 2
+[READY_LIST + 32] = 1;
+load(29, 25);
+
+alias PTBR1 S0;
+PTBR1 = 1032;
+
+[PTBR1 + 0] = 29;
+[PTBR1 + 1] = "01";
+[PTBR1 + 2] = -1;
+[PTBR1 + 3] = "00";
+[PTBR1 + 4] = -1;
+[PTBR1 + 5] = "00";
+[PTBR1 + 6] = 30;
+[PTBR1 + 7] = "01";
+
+
+[READY_LIST + 33] = 1;
+[READY_LIST + 34] = 1536;
+[READY_LIST + 35] = 1536;
+[READY_LIST + 36] = 0;
+[READY_LIST + 37] = PTBR1;
+[READY_LIST + 38] = 4;
+
 
 ireturn;
