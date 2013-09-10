@@ -1,0 +1,61 @@
+alias physicalSP S0;
+alias i S2;
+alias j S3;
+alias k S4;
+alias cPID S5;
+alias cPCB S6;
+cPID = (PTBR - 1024) / 8;
+cPCB = READY_LIST + 32 * cPID;
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+
+
+if ([physicalSP - 1] == 2) then
+	alias filename S1;
+	filename = [physicalSP - 3];
+
+
+	//	Check If File Exists
+	i = 0;
+	while (i < 512 && ([FAT + i] != filename)) do
+		i = i + 8;
+	endwhile;
+	if (i == 512) then					//	File Does Not Exist
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+	i = i/ 8;
+
+
+	//	Check for file in System Wide File Open Table
+	j = 0;
+	while (j <  128 && ([FILE_TABLE + j] != i)) do
+		j = j + 2;
+	endwhile;
+	if (j == 128) then					// File is Not Open
+		j = 0;
+		while (j < 128 && ([FILE_TABLE + j] != -1)) do
+			j = j + 2;
+		endwhile;
+		if (j == 128) then
+			[physicalSP - 2] = -1;
+			ireturn;
+		endif;
+	endif;
+
+
+	//	Check For Free Entry in Per Process Open File Table
+	k = 15;
+	while (k < 31 && [cPCB + k] != -1) do
+		k = k + 2;
+	endwhile;
+	if (k == 31) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+	[cPCB + k] = j / 2;
+	[cPCB + k + 1] = 0;
+	[FILE_TABLE + j] = i;
+	[FILE_TABLE + j + 1] = [FILE_TABLE + j + 1] + 1;
+	[physicalSP - 2] = (k - 15) / 2;
+	ireturn;
+endif;

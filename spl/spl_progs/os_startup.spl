@@ -26,6 +26,15 @@ load(24, 18);
 load(5, 19);
 load(6, 20);
 
+// System Wide File Open Table is Initialized
+alias counter S0;			
+counter = 0;
+while ( counter <  128) do
+	[ FILE_TABLE + counter + 0] = -1;
+	[ FILE_TABLE + counter + 1] =  0;
+	counter = counter + 2;
+endwhile;
+
 //	Process 1
 [READY_LIST + 0] = 0;
 load(25,21);
@@ -35,7 +44,7 @@ load(27,23);
 PTBR = 1024;
 PTLR = 4;
 
-//Set up Per App Page Table
+//	Set up Per App Page Table
 [PTBR] = 25;
 [PTBR + 1] = "01";
 [PTBR + 2] = 26;
@@ -45,6 +54,12 @@ PTLR = 4;
 [PTBR + 6] = 28;
 [PTBR + 7] = "01";
 
+//	Set up Per Process Open File Table
+counter = 15;
+while (counter < 31) do
+	[READY_LIST + counter] = -1;
+	counter = counter + 1;
+endwhile;
 
 [READY_LIST + 1] = 2;
 SP = 1536;
