@@ -1,0 +1,109 @@
+alias physicalSP S0;
+alias newPCB S1;
+alias newPID S2;
+alias newPTBR S3;
+alias i S4;
+alias j S5;
+alias k S6;
+alias p S7;
+alias q S8;
+alias r S9;
+
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+
+if ([physicalSP - 1] == 8) then
+
+	//	Check for free PCB
+	newPCB = READY_LIST;
+	while (newPCB < 2560 && [newPCB + 1] != 0) do
+		newPCB = newPCB + 32;
+	endwhile;
+	if (newPCB == 2560) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+	newPID = (newPCB - READY_LIST) / 32;
+	newPTBR = 1024 + 8 * newPID;
+
+	i = 1;
+	if ([PTBR + 1] != "00") then
+		i = i + 1;
+	endif;
+	if ([PTBR + 3] != "00") then
+		i = i + 1;
+	endif;
+	if ([PTBR + 5] != "00") then
+		i = i + 1;
+	endif;
+
+	//	Check For Free Memory
+	j = 25;
+	k = 0;
+	while (j < 64 && k < i) do
+		if ([MEM_LIST + j] == 0) then
+			k = k + 1;
+		endif;
+		j = j + 1;
+	endwhile;
+	if (k < i) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Allocate Memory
+	i = 0;
+	j = 25;
+	while (i < 4) do
+		k = PTBR + 2 * i;
+		if ([k + 1] != "00") then
+			while ([MEM_LIST + j] != 0) do
+				j = j + 1;
+			endwhile;
+			[MEM_LIST + j] = 1;
+			p = 0;
+			q = [k] * 512;
+			r = j * 512;
+			while (p < 512) do
+				[r + p] = [q + p];
+				p = p + 1;
+			endwhile;
+			[newPTBR + i * 2] = j;
+		else
+			[newPTBR + i * 2] = -1;
+		endif;
+		[newPTBR + i * 2 + 1] = [k + 1];
+		i = i + 1;
+	endwhile;
+
+
+	//	Set up Forked PCB
+	[newPCB] = newPID;
+	[newPCB + 2] = BP;
+	[newPCB + 3] = SP - 1;
+	[newPCB + 4] = [physicalSP];
+	[newPCB + 5] = newPTBR;
+	[newPCB + 6] = PTLR;
+	[newPCB + 7] = R0;
+	[newPCB + 8] = R1;
+	[newPCB + 9] = R2;
+	[newPCB + 10] = R3;
+	[newPCB + 11] = R4;
+	[newPCB + 12] = R5;
+	[newPCB + 13] = R6;
+	[newPCB + 14] = R7;
+	[newPCB + 1] = 1;
+	i = 15;
+	j = READY_LIST + (PTBR - 1024) * 4;
+	while (i < 31) do
+		if ([j + i] != -1) then
+			[FILE_TABLE + 2 * [j + i] + 1] = [FILE_TABLE + 2 * [j + i] + 1] + 1;
+		endif;
+		[newPCB + i] = [j + i];
+		[newPCB + i + 1] = [j + i + 1];
+		i = i + 2;
+	endwhile;
+	[physicalSP - 2] = newPID;
+	[([newPTBR + 2 * ((SP  - 1) / 512)] * 512) + ((SP - 1) % 512) - 1] = -2;
+	ireturn; 
+endif;

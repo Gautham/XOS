@@ -35,6 +35,26 @@ while ( counter <  128) do
 	counter = counter + 2;
 endwhile;
 
+//	Memory Free List is Initialized
+counter = 0;
+while (counter < 25) do
+	[MEM_LIST + counter] = 1;
+	counter = counter + 1;
+endwhile;
+while (counter < 64) do
+	[MEM_LIST + counter] = 0;
+	counter = counter + 1;
+endwhile;
+
+
+//	Set up PCBs
+counter = READY_LIST;
+while (counter < 2560) do
+	[counter + 1] = 0;
+	counter = counter + 32;
+endwhile;
+
+
 //	Process 1
 [READY_LIST + 0] = 0;
 load(25,21);
@@ -53,6 +73,11 @@ PTLR = 4;
 [PTBR + 5] = "01";
 [PTBR + 6] = 28;
 [PTBR + 7] = "01";
+[MEM_LIST + 25] = 1;
+[MEM_LIST + 26] = 1;
+[MEM_LIST + 27] = 1;
+[MEM_LIST + 28] = 1;
+
 
 //	Set up Per Process Open File Table
 counter = 15;
@@ -60,6 +85,7 @@ while (counter < 31) do
 	[READY_LIST + counter] = -1;
 	counter = counter + 1;
 endwhile;
+
 
 [READY_LIST + 1] = 2;
 SP = 1536;
