@@ -40,3 +40,48 @@ if ([physicalSP - 1] == 6) then
 	[physicalSP - 2] = 0;
 	ireturn;
 endif;
+
+
+if ([physicalSP - 1] == 7) then
+	alias cPID S6;
+	alias cPCB S7;
+	cPID = (PTBR - 1024) / 8;
+	cPCB = READY_LIST + 32 * cPID;
+
+
+	//	Check if fileDescriptor is Valid
+	if (fileDescriptor < 0 || fileDescriptor > 7) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Check if Process Open File Table Entry is Valid
+	i = cPCB + 15 + 2 * fileDescriptor;
+	j = [i];
+	k = [i+1];
+	if (j == -1 || k < 0) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Check FAT Table
+	j = FAT + j * 8;
+	if ([j + 1] <= k) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+	
+	load(1, [j + 2]);
+	j = [SCRATCHPAD + k / 512];
+	if (j == -1) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+	load(1, j);
+	[physicalSP - 3] = [SCRATCHPAD + k % 512];
+	[i + 1] = k + 1;
+	[physicalSP - 2] = 0;
+	ireturn;
+endif;
