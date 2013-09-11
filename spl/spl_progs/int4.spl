@@ -1,0 +1,81 @@
+alias physicalSP S0;
+alias fileDescriptor S1;
+alias i S3;
+alias j S4;
+alias k S5;
+alias l S8;
+
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+fileDescriptor = [physicalSP - 4];
+
+if ([physicalSP - 1] == 5) then
+	alias word S2;
+	alias cPID S6;
+	alias cPCB S7;
+	cPID = (PTBR - 1024) / 8;
+	cPCB = READY_LIST + 32 * cPID;
+	word = [physicalSP - 3];
+
+	
+	//	Check if fileDescriptor is Valid
+	if (fileDescriptor < 0 || fileDescriptor > 7) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Check if Process Open File Table Entry is Valid
+	i = cPCB + 15 + 2 * fileDescriptor;
+	alias fatID S8;
+	alias lSeek S9;
+	fatID = [i];
+	if (fatID == -1) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+	lSeek = [i + 1];
+
+
+	//	Check System Wide File Open Table to get FAT Entry
+	fatID = [FILE_TABLE + fatID * 2];
+	if (fatID == -1) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Check FAT Table
+	j = [FAT + fatID * 8 + 2];
+	if (j == -1) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Load Basic Block To Memory
+	load(1, j);
+	k = [SCRATCHPAD + lSeek / 512];
+	if (k == -1) then
+		k = 24;
+		while (k < 448 && [DISK_LIST + k] != 0) do
+			k = k + 1;
+		endwhile;
+		if (k == 448) then
+			[physicalSP - 2] = -1;
+			ireturn;
+		endif;
+		[DISK_LIST + k] = 1;
+		[SCRATCHPAD + lSeek / 512] = k;
+		store(1, j);
+		[FAT + fatID * 8 + 1] = [FAT + fatID * 8 + 1] + 512;
+		store(5, 19);
+		store(6, 20);
+	endif;
+
+	load(1, k);
+	[SCRATCHPAD + lSeek % 512] = word;
+	store(1, k);
+	[i + 1] = lSeek + 1;
+	[physicalSP - 2] = 0;
+	ireturn;
+endif;
