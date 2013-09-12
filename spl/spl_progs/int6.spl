@@ -1,0 +1,114 @@
+alias physicalSP S0;
+alias filename S1;
+alias PCB S2;
+alias i S3;
+alias j S4;
+alias k S5;
+alias l S6;
+
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+filename = [physicalSP - 3];
+
+if ([physicalSP - 1] == 9) then
+
+	//	Check if File Exists
+	i = FAT;
+	while (i < 3072 && [i] != filename) do
+		i = i + 8;
+	endwhile;
+	if (i == 3072) then				//	File Not Found
+		[physicalSP -2] = -1;
+		ireturn;
+	endif;
+
+
+	//	Count No. Of Pages
+	load(1, [i + 2]);
+	i = 0;
+	j = 0;
+	while (i < 3) do
+		if ([SCRATCHPAD + i] != -1) then
+			j = j + 1;
+		endif;
+		i = i + 1;
+	endwhile;
+	i = 0;
+	if ([PTBR + 1] != "00") then
+		i = i + 1;
+	endif;
+	if ([PTBR + 3] != "00") then
+		i = i + 1;
+	endif;
+	if ([PTBR + 5] != "00") then
+		i = i + 1;
+	endif;
+
+
+	//	Load Code Pages
+	if (i < j) then
+		k = i;
+		l = 25;
+		while (l < 64 && k < j) do
+			if ([MEM_LIST + l] == 0) then
+				k = k + 1;
+			endif;
+			l = l + 1;
+		endwhile;
+		if (k < j) then
+			[physicalSP - 2] = -1;
+			ireturn;
+		endif;
+
+		l = 25;
+		while (l < 64 && i < j) do
+			if ([MEM_LIST + l] == 0) then
+				[MEM_LIST + l] = 1;
+				[PTBR + i * 2] = l;
+				i = i + 1;
+			endif;
+			l = l + 1;
+		endwhile;
+	endif;
+
+	k = 0;
+	while (k < j) do
+			load([PTBR + k * 2], [SCRATCHPAD + k]);
+			[PTBR + k * 2 + 1] = "01";
+			k = k + 1;
+	endwhile;
+
+	if (i > j) then
+		k = j + 1;
+		while (k <= i) do
+			if ([PTBR + 2 * k - 1] != "00") then
+				[MEM_LIST + [PTBR + 2 * k - 2]] = 0;
+				[PTBR + 2 * k - 1] = "00";
+				[PTBR + 2 * k - 2] = -1;
+			endif;
+			k = k + 1;
+		endwhile; 
+	endif;
+
+
+	//	Close all Open Files
+	i = 15;
+	PCB = READY_LIST + (PTBR - 1024) * 4;
+	while (i < 31) do
+		j = PCB + i;
+		if ([j] != -1) then
+			k = FILE_TABLE + 2 * [j] + 1;
+			l = [k] - 1;
+			[k] = l;
+			if (l == 0) then
+				[k - 1] = -1;
+			endif;
+			[j] = -1;
+			[j + 1] = -1;
+		endif;
+		i = i + 2;
+	endwhile;
+	SP = 1536;
+	physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+	[physicalSP] = 0;
+	ireturn;
+endif;
