@@ -26,10 +26,9 @@ alias newPCB S3;
 newPCB = cPCB + 32;
 
 while ((newPCB != cPCB) && ([newPCB + 1] != 1)) do
+	newPCB = newPCB + 32;
 	if (newPCB == 2560) then
 		newPCB = READY_LIST;
-	else
-		newPCB = newPCB + 32;
 	endif;
 endwhile;
 
