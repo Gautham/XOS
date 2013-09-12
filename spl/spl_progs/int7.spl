@@ -1,1 +1,84 @@
-halt;
+alias physicalSP S0;
+alias currentPCB S1;
+alias newPCB S2;
+alias i S3;
+alias j S4;
+alias k S5;
+alias l S6;
+
+
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+if ([physicalSP - 1] == 10) then
+	breakpoint;
+	
+
+	//	Find New Process PCB
+	physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+	currentPCB = (PTBR - 1024) * 4 + READY_LIST;
+	if (currentPCB == 2528) then
+		newPCB = READY_LIST;
+	else
+		newPCB = currentPCB + 32;
+	endif;
+	while (newPCB != currentPCB && [newPCB + 1] != 1) do
+		newPCB = newPCB + 32;
+		if (newPCB == 2560) then
+			newPCB = READY_LIST;
+		endif;
+	endwhile;
+	if (newPCB == currentPCB) then			//	No Other Process To Run
+		halt;
+	endif;
+
+
+	//	All Open Files Are Closed
+	i = 15;
+	while (i < 31) do
+		j = newPCB + i;
+		if ([j] != -1) then
+			k = FILE_TABLE + 2 * [j] + 1;
+			l = [k] - 1;
+			[k] = l;
+			if (l == 0) then
+				[k - 1] = -1;
+			endif;
+			[j] = -1;
+			[j + 1] = -1;
+		endif;
+		i = i + 2;
+	endwhile;
+
+
+	//	End Process & Deallocate Pages
+	[currentPCB + 1] = 0;
+	i = 0;
+	while (i < 4) do
+		if ([PTBR + i * 2] != -1) then
+			[MEM_LIST + [PTBR + 2 * i]] = 0;
+		endif;
+		[PTBR + 2 * i] = -1;
+		[PTBR + 2 * i + 1] = "00";
+		i = i + 1;
+	endwhile;
+
+
+	//	Reload Context
+	BP = [newPCB + 2];
+	SP = [newPCB + 3];
+	PTBR = [newPCB + 5];
+	PTLR = [newPCB + 6];
+	R0 = [newPCB + 7];
+	R1 = [newPCB + 8];
+	R2 = [newPCB + 9];
+	R3 = [newPCB + 10];
+	R4 = [newPCB + 11];
+	R5 = [newPCB + 12];
+	R6 = [newPCB + 13];
+	R7 = [newPCB + 14];
+
+	SP = SP + 1;
+	physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512); 
+	[physicalSP] = [newPCB + 4];
+	[newPCB + 1] = 2;
+	ireturn;
+endif;

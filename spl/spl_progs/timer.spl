@@ -23,8 +23,11 @@ physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
 [cPCB + 14] = R7;	
 
 alias newPCB S3;
-newPCB = cPCB + 32;
-
+if (cPCB == 2528) then
+	newPCB = READY_LIST;
+else
+	newPCB = cPCB + 32;
+endif;
 while ((newPCB != cPCB) && ([newPCB + 1] != 1)) do
 	newPCB = newPCB + 32;
 	if (newPCB == 2560) then

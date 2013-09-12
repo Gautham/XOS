@@ -17,8 +17,8 @@ if ([physicalSP - 1] == 9) then
 		i = i + 8;
 	endwhile;
 	if (i == 3072) then				//	File Not Found
-		[physicalSP -2] = -1;
-		ireturn;
+		print("Exec Error!");
+		inline "JMP 11814";
 	endif;
 
 
@@ -55,8 +55,8 @@ if ([physicalSP - 1] == 9) then
 			l = l + 1;
 		endwhile;
 		if (k < j) then
-			[physicalSP - 2] = -1;
-			ireturn;
+			print("Exec Error!");
+			inline "JMP 11814";
 		endif;
 
 		l = 25;

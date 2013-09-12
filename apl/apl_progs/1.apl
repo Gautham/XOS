@@ -9,5 +9,6 @@ integer main() {
 		print(i);
 		i = i + 3;
 	endwhile;
+	Exit();
 	return 0;
 }
