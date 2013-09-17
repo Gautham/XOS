@@ -10,7 +10,6 @@ physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
 filename = [physicalSP - 3];
 
 if ([physicalSP - 1] == 9) then
-
 	//	Check if File Exists
 	i = FAT;
 	while (i < 3072 && [i] != filename) do
@@ -22,73 +21,22 @@ if ([physicalSP - 1] == 9) then
 	endif;
 
 
-	//	Count No. Of Pages
+	//	Initialize PTBR
 	load(1, [i + 2]);
 	i = 0;
-	j = 0;
-	while (i < 3) do
-		if ([SCRATCHPAD + i] != -1) then
-			j = j + 1;
+	while (i < 6) do
+		j = PTBR + i;
+		k = [j + 1];
+		if (k == "01" || k == "11") then
+			[MEM_LIST + [j]] = [MEM_LIST + [j]] - 1;
 		endif;
-		i = i + 1;
-	endwhile;
-	i = 0;
-	if ([PTBR + 1] != "00") then
-		i = i + 1;
-	endif;
-	if ([PTBR + 3] != "00") then
-		i = i + 1;
-	endif;
-	if ([PTBR + 5] != "00") then
-		i = i + 1;
-	endif;
-
-
-	//	Load Code Pages
-	if (i < j) then
-		k = i;
-		l = 25;
-		while (l < 64 && k < j) do
-			if ([MEM_LIST + l] == 0) then
-				k = k + 1;
-			endif;
-			l = l + 1;
-		endwhile;
-		if (k < j) then
-			print("Exec Error!");
-			inline "JMP 11814";
+		if (k == "00" && [j] > 447 ) then
+			[DISK_LIST + [j]] = [DISK_LIST + [j]] - 1;
 		endif;
-
-		l = 25;
-		while (l < 64 && i < j) do
-			if ([MEM_LIST + l] == 0) then
-				[MEM_LIST + l] = 1;
-				[PTBR + i * 2] = l;
-				i = i + 1;
-			endif;
-			l = l + 1;
-		endwhile;
-	endif;
-
-	k = 0;
-	while (k < j) do
-			load([PTBR + k * 2], [SCRATCHPAD + k]);
-			[PTBR + k * 2 + 1] = "01";
-			k = k + 1;
+		[j] = [SCRATCHPAD + i / 2];
+		[j + 1] = "00";
+		i = i + 2;
 	endwhile;
-
-	if (i > j) then
-		k = j + 1;
-		while (k <= i) do
-			if ([PTBR + 2 * k - 1] != "00") then
-				[MEM_LIST + [PTBR + 2 * k - 2]] = 0;
-				[PTBR + 2 * k - 1] = "00";
-				[PTBR + 2 * k - 2] = -1;
-			endif;
-			k = k + 1;
-		endwhile; 
-	endif;
-
 
 	//	Close all Open Files
 	i = 15;
@@ -108,7 +56,7 @@ if ([physicalSP - 1] == 9) then
 		i = i + 2;
 	endwhile;
 	SP = 1536;
-	physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
-	[physicalSP] = 0;
+	[[PTBR + 6] * 512] = 0;
+	[PTBR + 7] = "01";
 	ireturn;
 endif;

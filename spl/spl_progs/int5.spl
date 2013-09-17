@@ -5,14 +5,11 @@ alias newPTBR S3;
 alias i S4;
 alias j S5;
 alias k S6;
-alias p S7;
-alias q S8;
-alias r S9;
+alias l S7;
 
 physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
 
 if ([physicalSP - 1] == 8) then
-
 	//	Check for free PCB
 	newPCB = READY_LIST;
 	while (newPCB < 2560 && [newPCB + 1] != 0) do
@@ -25,56 +22,81 @@ if ([physicalSP - 1] == 8) then
 	newPID = (newPCB - READY_LIST) / 32;
 	newPTBR = 1024 + 8 * newPID;
 
-	i = 1;
-	if ([PTBR + 1] != "00") then
-		i = i + 1;
-	endif;
-	if ([PTBR + 3] != "00") then
-		i = i + 1;
-	endif;
-	if ([PTBR + 5] != "00") then
-		i = i + 1;
-	endif;
-
 	//	Check For Free Memory
-	j = 25;
-	k = 0;
-	while (j < 64 && k < i) do
-		if ([MEM_LIST + j] == 0) then
-			k = k + 1;
-		endif;
+	i = 25;
+	while (i < 64 && [MEM_LIST + i] != 0) do
+		i = i + 1;
+	endwhile;
+
+
+	if (i == 64) then
+		j = PTBR + 8;
+		i = -1;
+		while (i == -1) do
+			if (j == 1280) then
+				j = 1024;
+			endif;
+			if ([j + 1] == "11" && [MEM_LIST + [j]] == 1) then
+				[j + 1] = "01";
+			else
+				if ([j + 1] == "01") then
+					i = [j];
+					if ([MEM_LIST + i] > 1) then
+						i = -1;
+					else
+						k = 448;
+						while (k < 512 && [DISK_LIST + k] != 0) do
+							k = k + 1;
+						endwhile;
+						if (k == 512) then
+							[physicalSP - 2] = -1;
+							ireturn;
+						endif;
+						store(i, k);
+						[DISK_LIST + k] = 1;
+						[j] = k;
+						[j + 1] = "00";
+					endif;
+				endif;
+			endif;
+			j = j + 2;
+			if (j % 8 == 6) then
+				j = j + 2;
+			endif;
+		endwhile;
+	else
+		[MEM_LIST + i] = 1;
+	endif;
+	
+	
+	//	Copy Over Stack Page
+	j = 0;
+	k = [PTBR + 6] * 512;
+	l = i * 512;
+	while (j < 512) do
+		[l + j] = [k + j];
 		j = j + 1;
 	endwhile;
-	if (k < i) then
-		[physicalSP - 2] = -1;
-		ireturn;
-	endif;
 
 
-	//	Allocate Memory
-	i = 0;
-	j = 25;
-	while (i < 4) do
-		k = PTBR + 2 * i;
-		if ([k + 1] != "00") then
-			while ([MEM_LIST + j] != 0) do
-				j = j + 1;
-			endwhile;
-			[MEM_LIST + j] = 1;
-			p = 0;
-			q = [k] * 512;
-			r = j * 512;
-			while (p < 512) do
-				[r + p] = [q + p];
-				p = p + 1;
-			endwhile;
-			[newPTBR + i * 2] = j;
-		else
-			[newPTBR + i * 2] = -1;
+	//	Initialize PTBR
+	[newPTBR + 6] = i;
+	[newPTBR + 7] = "01";
+	j = 0;
+	while (j < 6) do
+		k = PTBR + j;
+		l = [k + 1];
+		[newPTBR + j] = [k];
+		[newPTBR + j + 1] = l;
+		if (l == "01" || l == "11") then
+			[MEM_LIST + [k]] = [MEM_LIST + [k]] + 1;
 		endif;
-		[newPTBR + i * 2 + 1] = [k + 1];
-		i = i + 1;
+		if (l == "00" && [k] > 447) then
+			[DISK_LIST + [k]] = [DISK_LIST + [k]] + 1;
+		endif;
+		j = j + 2;
 	endwhile;
+
 
 
 	//	Set up Forked PCB
@@ -93,17 +115,17 @@ if ([physicalSP - 1] == 8) then
 	[newPCB + 13] = R6;
 	[newPCB + 14] = R7;
 	[newPCB + 1] = 1;
-	i = 15;
+	k = 15;
 	j = READY_LIST + (PTBR - 1024) * 4;
-	while (i < 31) do
-		if ([j + i] != -1) then
-			[FILE_TABLE + 2 * [j + i] + 1] = [FILE_TABLE + 2 * [j + i] + 1] + 1;
+	while (k < 31) do
+		if ([j + k] != -1) then
+			[FILE_TABLE + 2 * [j + k] + 1] = [FILE_TABLE + 2 * [j + k] + 1] + 1;
 		endif;
-		[newPCB + i] = [j + i];
-		[newPCB + i + 1] = [j + i + 1];
-		i = i + 2;
+		[newPCB + k] = [j + k];
+		[newPCB + k + 1] = [j + k + 1];
+		k = k + 2;
 	endwhile;
 	[physicalSP - 2] = newPID;
-	[([newPTBR + 2 * ((SP  - 1) / 512)] * 512) + ((SP - 1) % 512) - 1] = -2;
+	[(i * 512) + ((SP - 1) % 512) - 1] = -2;
 	ireturn; 
 endif;

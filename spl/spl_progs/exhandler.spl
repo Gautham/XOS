@@ -1,2 +1,85 @@
-print("Exception");
-halt;
+alias Cause S0;
+alias VPagenum S1;
+alias Ip_addr S2;
+alias PID S3;
+alias i S4;
+alias j S5;
+alias k S6;
+
+Cause = EFR % 10;
+VPagenum = (EFR / 10) % 100;
+Ip_addr = (EFR/1000);
+PID = (PTBR - 1024) / 8;
+
+
+if (Cause != 0) then			//	Cause is not a Page Fault
+	print("Error in PID");
+	print(PID);
+	inline "JMP 11814";
+endif;
+
+
+if ([PTBR + VPagenum * 2] == -1) then		//	Invalid Page Reference
+	print("Invalid Page");
+	print("in PID");
+	print(PID);
+	inline "JMP 11814";
+endif;
+
+
+i = 25;
+while (i < 64 && [MEM_LIST + i] != 0) do
+	i = i + 1;
+endwhile;
+if (i == 64) then
+	j = PTBR + 8;
+	i = -1;
+	while (i == -1) do
+		if (j == 1280) then
+			j = 1024;
+		endif;
+		if ([j + 1] == "11" && [MEM_LIST + [j]] == 1) then
+			[j + 1] = "01";
+		else
+			if ([j + 1] == "01") then
+				i = [j];
+				if ([MEM_LIST + i] > 1) then
+					i = -1;
+				else
+					k = 448;
+					while (k < 512 && [DISK_LIST + k] != 0) do
+						k = k + 1;
+					endwhile;
+					if (k == 512) then
+						print("No Swap");
+						print("in PID");
+						print(PID);
+						inline "JMP 11814";
+					endif;
+					store(i, k);
+					[DISK_LIST + k] = 1;
+					[j] = k;
+					[j + 1] = "00";
+				endif;
+			endif;
+		endif;
+		j = j + 2;
+		if (j % 8 == 6) then
+			j = j + 2;
+		endif;
+	endwhile;
+else
+	[MEM_LIST + i] = 1;
+endif;
+
+
+j = [PTBR + 2 * VPagenum];
+load(i, j);
+if (j > 447) then				//	Swap Disk Block
+	[DISK_LIST + j] = [DISK_LIST + j] - 1;
+endif;
+[PTBR + 2 * VPagenum] = i;
+[PTBR + 2 * VPagenum + 1] = "11";
+SP = SP + 1;
+[[PTBR + 6] * 512 + SP % 512] = Ip_addr;
+ireturn;

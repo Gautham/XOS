@@ -35,6 +35,14 @@ while ( counter <  128) do
 	counter = counter + 2;
 endwhile;
 
+//	Swap Area is Initialized
+counter = 448;
+while (counter < 512) do
+	[DISK_LIST + counter] = 0;
+	store(6, 20);
+	counter = counter + 1;
+endwhile; 
+
 //	Memory Free List is Initialized
 counter = 0;
 while (counter < 25) do
@@ -57,26 +65,20 @@ endwhile;
 
 //	Process 1
 [READY_LIST + 0] = 0;
-load(25,21);
-load(26,22);
-load(27,23);
 
 PTBR = 1024;
 PTLR = 4;
 
 //	Set up Per App Page Table
-[PTBR] = 25;
-[PTBR + 1] = "01";
-[PTBR + 2] = 26;
-[PTBR + 3] = "01";
-[PTBR + 4] = 27;
-[PTBR + 5] = "01";
-[PTBR + 6] = 28;
+[PTBR] = 21;
+[PTBR + 1] = "00";
+[PTBR + 2] = 22;
+[PTBR + 3] = "00";
+[PTBR + 4] = 23;
+[PTBR + 5] = "00";
+[PTBR + 6] = 25;
 [PTBR + 7] = "01";
 [MEM_LIST + 25] = 1;
-[MEM_LIST + 26] = 1;
-[MEM_LIST + 27] = 1;
-[MEM_LIST + 28] = 1;
 
 
 //	Set up Per Process Open File Table
@@ -89,6 +91,6 @@ endwhile;
 
 [READY_LIST + 1] = 2;
 SP = 1536;
-[28 * 512] = 0;
+[25 * 512] = 0;
 
 ireturn;

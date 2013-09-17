@@ -9,11 +9,8 @@ alias l S6;
 
 physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
 if ([physicalSP - 1] == 10) then
-	breakpoint;
-	
 
 	//	Find New Process PCB
-	physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
 	currentPCB = (PTBR - 1024) * 4 + READY_LIST;
 	if (currentPCB == 2528) then
 		newPCB = READY_LIST;
@@ -34,7 +31,7 @@ if ([physicalSP - 1] == 10) then
 	//	All Open Files Are Closed
 	i = 15;
 	while (i < 31) do
-		j = newPCB + i;
+		j = currentPCB + i;
 		if ([j] != -1) then
 			k = FILE_TABLE + 2 * [j] + 1;
 			l = [k] - 1;
@@ -53,14 +50,18 @@ if ([physicalSP - 1] == 10) then
 	[currentPCB + 1] = 0;
 	i = 0;
 	while (i < 4) do
-		if ([PTBR + i * 2] != -1) then
-			[MEM_LIST + [PTBR + 2 * i]] = 0;
+		j = PTBR + 2 * i;
+		k = [j + 1];
+		if (k == "01" || k == "11") then
+			[MEM_LIST + [j]] = [MEM_LIST + [j]] - 1;
 		endif;
-		[PTBR + 2 * i] = -1;
-		[PTBR + 2 * i + 1] = "00";
+		if (k == "00" && [j] > 447) then
+			[DISK_LIST + [j]] = [DISK_LIST + [j]] - 1;
+		endif;
+		[j] = -1;
+		[j + 1] = "00";
 		i = i + 1;
 	endwhile;
-
 
 	//	Reload Context
 	BP = [newPCB + 2];
