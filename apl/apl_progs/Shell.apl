@@ -6,7 +6,7 @@ enddecl
 integer main() {
 	print("Input >");
 	read(c);
-	while (c != "Exit") do
+	while (c != "Exit" && c != "exit") do
 		if (c == "cat" || c == "Cat") then
 			print("Filename?");
 			read(d);
@@ -25,13 +25,23 @@ integer main() {
 				j = Close(i);
 				print("EOF");
 			endif;
+		else if (c == "rm" || c == "Rm") then
+			print("Filename?");
+			read(d);
+			i = Delete(d);
+			if (i == -1) then
+				print("Delete Failed");
+			else
+				print("Deleted!");
+			endif;
 		else
 			i = Fork();
 			if (i == -2) then
 				j = Exec(c);
 			else
 				j = Wait(i);
-			endif;
+			endif;		
+		endif;
 		endif;
 		print("Input >");
 		read(c);
