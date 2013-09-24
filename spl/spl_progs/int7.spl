@@ -10,25 +10,8 @@ alias l S6;
 physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
 if ([physicalSP - 1] == 10) then
 
-	//	Find New Process PCB
-	currentPCB = (PTBR - 1024) * 4 + READY_LIST;
-	if (currentPCB == 2528) then
-		newPCB = READY_LIST;
-	else
-		newPCB = currentPCB + 32;
-	endif;
-	while (newPCB != currentPCB && [newPCB + 1] != 1) do
-		newPCB = newPCB + 32;
-		if (newPCB == 2560) then
-			newPCB = READY_LIST;
-		endif;
-	endwhile;
-	if (newPCB == currentPCB) then			//	No Other Process To Run
-		halt;
-	endif;
-
-
 	//	All Open Files Are Closed
+	currentPCB = (PTBR - 1024) * 4 + READY_LIST;
 	i = 15;
 	while (i < 31) do
 		j = currentPCB + i;
@@ -44,7 +27,6 @@ if ([physicalSP - 1] == 10) then
 		endif;
 		i = i + 2;
 	endwhile;
-
 
 	//	End Process & Deallocate Pages
 	[currentPCB + 1] = 0;
@@ -62,6 +44,33 @@ if ([physicalSP - 1] == 10) then
 		[j + 1] = "00";
 		i = i + 1;
 	endwhile;
+
+	i = [(PTBR - 1024) * 4 + READY_LIST] + 100;
+	j = READY_LIST + 1;
+	while (j != 2561) do
+		if ([j] == i) then
+			[j] = 1;
+		endif;
+		j = j + 32;
+	endwhile;
+
+	currentPCB = (PTBR - 1024) * 4 + READY_LIST;
+	//	Find New Process PCB
+	if (currentPCB == 2528) then
+		newPCB = READY_LIST;
+	else
+		newPCB = currentPCB + 32;
+	endif;
+	while (newPCB != currentPCB && [newPCB + 1] != 1) do
+		newPCB = newPCB + 32;
+		if (newPCB == 2560) then
+			newPCB = READY_LIST;
+		endif;
+	endwhile;
+	if (newPCB == currentPCB) then			//	No Other Process To Run
+		halt;
+	endif;
+
 
 	//	Reload Context
 	BP = [newPCB + 2];
@@ -81,5 +90,47 @@ if ([physicalSP - 1] == 10) then
 	physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512); 
 	[physicalSP] = [newPCB + 4];
 	[newPCB + 1] = 2;
+	ireturn;
+endif;
+
+
+if ([physicalSP - 1] == 13) then
+	alias wPID S1;
+	wPID = [physicalSP - 3];
+	i = READY_LIST + wPID * 32 + 1;
+	if ([i] == 0 || [i] == 2) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
+	i = (PTBR - 1024) * 4 + READY_LIST;
+	[i + 1] = 100 + wPID;
+	[i + 2] = BP;
+	[i + 3] = SP - 1;
+	[i + 4] = [physicalSP];
+	[i + 5] = PTBR;
+	[i + 6] = PTLR;	
+	[i + 7] = R0;	
+	[i + 8] = R1;	
+	[i + 9] = R2;	
+	[i + 10] = R3;	
+	[i + 11] = R4;	
+	[i + 12] = R5;	
+	[i + 13] = R6;	
+	[i + 14] = R7;
+	inline "JMP 12072";
+	ireturn;
+endif;
+
+
+if ([physicalSP - 1] == 14) then
+	i = [(PTBR - 1024) * 4 + READY_LIST] + 100;
+	j = READY_LIST + 1;
+	while (j != 2561) do
+		if ([j] == i) then
+			[j] = 1;
+		endif;
+		j = j + 32;
+	endwhile;
+	[physicalSP - 2] = 0;
 	ireturn;
 endif;

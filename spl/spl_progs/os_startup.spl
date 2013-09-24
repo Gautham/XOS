@@ -90,6 +90,7 @@ endwhile;
 
 
 [READY_LIST + 1] = 2;
+[READY_LIST + 31] = 0;
 SP = 1536;
 [25 * 512] = 0;
 

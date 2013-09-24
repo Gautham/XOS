@@ -16,8 +16,8 @@ if ([physicalSP - 1] == 9) then
 		i = i + 8;
 	endwhile;
 	if (i == 3072) then				//	File Not Found
-		print("Exec Error!");
-		inline "JMP 11814";
+		print("Not Found!");
+		inline "JMP 11812";
 	endif;
 
 
@@ -58,5 +58,17 @@ if ([physicalSP - 1] == 9) then
 	SP = 1536;
 	[[PTBR + 6] * 512] = 0;
 	[PTBR + 7] = "01";
+	ireturn;
+endif;
+
+
+if ([physicalSP - 1] == 11) then
+	[physicalSP - 2] = (PTBR - 1024) / 8;
+	ireturn;
+endif;
+
+
+if ([physicalSP - 1] == 12) then
+	[physicalSP - 2] = [READY_LIST + (PTBR - 1024) * 4 + 31];
 	ireturn;
 endif;

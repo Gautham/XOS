@@ -114,6 +114,7 @@ if ([physicalSP - 1] == 8) then
 	[newPCB + 12] = R5;
 	[newPCB + 13] = R6;
 	[newPCB + 14] = R7;
+	[newPCB + 31] = (PTBR - 1024) / 8;
 	[newPCB + 1] = 1;
 	k = 15;
 	j = READY_LIST + (PTBR - 1024) * 4;
