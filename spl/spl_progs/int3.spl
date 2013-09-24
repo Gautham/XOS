@@ -65,6 +65,12 @@ if ([physicalSP - 1] == 7) then
 		ireturn;
 	endif;
 
+	//	Check System Wide File Open Table to get FAT Entry
+	j = [FILE_TABLE + j * 2];
+	if (j == -1) then
+		[physicalSP - 2] = -1;
+		ireturn;
+	endif;
 
 	//	Check FAT Table
 	j = FAT + j * 8;
@@ -72,7 +78,7 @@ if ([physicalSP - 1] == 7) then
 		[physicalSP - 2] = -1;
 		ireturn;
 	endif;
-	
+
 	load(1, [j + 2]);
 	j = [SCRATCHPAD + k / 512];
 	if (j == -1) then
