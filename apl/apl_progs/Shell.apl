@@ -54,6 +54,39 @@ integer main() {
 				f = 1;
 			endif;
 
+			//	Rename File
+			if (c == "mv" || c == "Mv") then
+				print("Filename?");
+				read(d);
+				i = Open(d);
+				if (i == -1) then
+					print("Not Found");
+				else
+					print("New Name?");
+					read(e);
+					k = Open(e);
+					if (k != -1) then
+						print("File Exists!");
+					else
+						k = Create(e);
+						if (k == -1) then
+							print("Failed!");
+						else
+							k = Open(e);
+							j = Read(i, e);
+							while (j != -1) do
+								j = Write(k, e);
+								j = Read(i, e);
+							endwhile;
+							k = Close(k);
+							i = Close(i);
+							i = Delete(d);
+							print("Renamed");
+						endif;
+					endif;
+				endif;
+				f = 1;
+			endif;	
 		endif;
 		if (f == 0) then
 			print("Invalid!");
