@@ -87,6 +87,43 @@ integer main() {
 				endif;
 				f = 1;
 			endif;	
+
+			//	Append File
+			if (c == "append" || c == "Append") then
+				print("Target?");
+				read(d);
+				i = Open(d);
+				if (i == -1) then
+					print("Not Found");
+				else
+					print("Appendee?");
+					read(e);
+					k = Open(e);
+					if (k == -1) then
+						print("File Not Found!");
+					else
+						k = Open(e);
+						if (k == -1) then
+							print("Failed!");
+						else
+							j = Read(i, e);
+							while (j != -1) do
+								j = Read(i, e);
+							endwhile;
+							j = Read(k, e);
+							while (j != -1) do
+								j = Write(i, e);
+								j = Read(k, e);
+							endwhile;
+							k = Close(k);
+							i = Close(i);
+							print("Appended");
+						endif;
+					endif;
+				endif;
+				f = 1;
+			endif;	
+
 		endif;
 		if (f == 0) then
 			print("Invalid!");
