@@ -39,9 +39,8 @@ endwhile;
 counter = 448;
 while (counter < 512) do
 	[DISK_LIST + counter] = 0;
-	store(6, 20);
 	counter = counter + 1;
-endwhile; 
+endwhile;
 
 //	Memory Free List is Initialized
 counter = 0;
